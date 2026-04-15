@@ -1,0 +1,184 @@
+version: '3.9'
+
+services:
+  # MongoDB for each service (shared for simplicity, can be separated)
+  mongodb:
+    image: mongo:7.0
+    container_name: smart-healthcare-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - healthcare-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Gateway Service
+  gateway-service:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      MONGO_URI: mongodb://root:password@mongodb:27017/gateway-db?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your_super_secure_jwt_secret_key_change_me}
+      AUTH_SERVICE_URL: http://auth-service:4001
+      PATIENT_SERVICE_URL: http://patient-service:4002
+      DOCTOR_SERVICE_URL: http://doctor-service:4003
+      APPOINTMENT_SERVICE_URL: http://appointment-service:4004
+      NOTIFICATION_SERVICE_URL: http://notification-service:4005
+      AI_SERVICE_URL: http://ai-service:4006
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "4001:4001"
+    environment:
+      NODE_ENV: production
+      PORT: 4001
+      MONGO_URI: mongodb://root:password@mongodb:27017/auth-db?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your_super_secure_jwt_secret_key_change_me}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # Patient Service
+  patient-service:
+    build:
+      context: ./patient-service
+      dockerfile: Dockerfile
+    container_name: patient-service
+    ports:
+      - "4002:4002"
+    environment:
+      NODE_ENV: production
+      PORT: 4002
+      MONGO_URI: mongodb://root:password@mongodb:27017/patient-db?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your_super_secure_jwt_secret_key_change_me}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # Doctor Service
+  doctor-service:
+    build:
+      context: ./doctor-service
+      dockerfile: Dockerfile
+    container_name: doctor-service
+    ports:
+      - "4003:4003"
+    environment:
+      NODE_ENV: production
+      PORT: 4003
+      MONGO_URI: mongodb://root:password@mongodb:27017/doctor-db?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your_super_secure_jwt_secret_key_change_me}
+      APPOINTMENT_SERVICE_URL: http://appointment-service:4004
+      PATIENT_SERVICE_URL: http://patient-service:4002
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # Appointment Service
+  appointment-service:
+    build:
+      context: ./appointment-service
+      dockerfile: Dockerfile
+    container_name: appointment-service
+    ports:
+      - "4004:4004"
+    environment:
+      NODE_ENV: production
+      PORT: 4004
+      MONGO_URI: mongodb://root:password@mongodb:27017/appointment-db?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your_super_secure_jwt_secret_key_change_me}
+      NOTIFICATION_SERVICE_URL: http://notification-service:4005
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "4005:4005"
+    environment:
+      NODE_ENV: production
+      PORT: 4005
+      MONGO_URI: mongodb://root:password@mongodb:27017/notification-db?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your_super_secure_jwt_secret_key_change_me}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@healthcare.com}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+  # AI Service
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: ai-service
+    ports:
+      - "4006:4006"
+    environment:
+      NODE_ENV: production
+      PORT: 4006
+      MONGO_URI: mongodb://root:password@mongodb:27017/ai-db?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your_super_secure_jwt_secret_key_change_me}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - healthcare-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+
+networks:
+  healthcare-network:
+    driver: bridge

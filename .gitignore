@@ -1,0 +1,93 @@
+# -----------------------------
+# Environment / Secrets
+# -----------------------------
+# Ignore real env files, keep templates and examples.
+.env
+.env.*
+!.env.example
+!.env.template
+backend/**/.env
+backend/**/.env.*
+!backend/**/.env.example
+
+# -----------------------------
+# Node / Package Managers
+# -----------------------------
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Keep lockfiles tracked so all teammates install exact versions.
+!package-lock.json
+!yarn.lock
+!pnpm-lock.yaml
+
+# -----------------------------
+# Build / Coverage
+# -----------------------------
+dist/
+build/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.next/
+
+# -----------------------------
+# Runtime / Temp / Cache
+# -----------------------------
+logs/
+*.log
+*.tmp
+tmp/
+temp/
+.cache/
+.parcel-cache/
+
+# -----------------------------
+# Editor / OS
+# -----------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# Docker
+# -----------------------------
+# Keep Dockerfile, docker-compose.yml and .dockerignore tracked.
+docker-compose.override.yml
+docker-compose.local.yml
+.docker/
+
+# -----------------------------
+# Kubernetes Local Config
+# -----------------------------
+*.kubeconfig
+kubeconfig
+kubeconfig.yaml
+
+# -----------------------------
+# App Data Uploads
+# -----------------------------
+backend/**/uploads/**
+!backend/**/uploads/
+!backend/patient-service/uploads/reports/
+!backend/patient-service/uploads/reports/.gitkeep
+
+# -----------------------------
+# Local Secrets Folders
+# -----------------------------
+secrets/
+private/
+
+
+
+
+
+
