@@ -111,10 +111,9 @@ start-all.bat
 ## ✅ Pre-Deployment Checklist
 
 ### MongoDB Setup
-- [ ] MongoDB Atlas cluster created
-- [ ] 7 database names created (one per service)
-- [ ] Connection strings ready
-- [ ] IP whitelist configured
+- [ ] MongoDB Atlas cluster created or local MongoDB ready
+- [ ] One shared connection string ready for all services
+- [ ] IP whitelist configured if using Atlas
 - [ ] Authentication enabled
 
 ### Credentials
@@ -178,13 +177,13 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
 
 | Service | Port | DB | Key Features | Status |
 |---------|------|----|----|--------|
-| Gateway | 4000 | gateway-db | JWT verify, proxy requests | ✅ |
-| Auth | 4001 | auth-db | Register, login, JWT | ✅ |
-| Patient | 4002 | patient-db | Profiles, medical history | ✅ |
-| Doctor | 4003 | doctor-db | Profiles, availability | ✅ |
-| Appointment | 4004 | appointment-db | Booking, cancellation | ✅ |
-| Notification | 4005 | notification-db | Email, SMS, logging | ✅ |
-| AI | 4006 | ai-db | Gemini symptom analysis | ✅ |
+| Gateway | 4000 | shared MongoDB URI | JWT verify, proxy requests | ✅ |
+| Auth | 4001 | shared MongoDB URI | Register, login, JWT | ✅ |
+| Patient | 4002 | shared MongoDB URI | Profiles, medical history | ✅ |
+| Doctor | 4003 | shared MongoDB URI | Profiles, availability | ✅ |
+| Appointment | 4004 | shared MongoDB URI | Booking, cancellation | ✅ |
+| Notification | 4005 | shared MongoDB URI | Email, SMS, logging | ✅ |
+| AI | 4006 | shared MongoDB URI | Gemini symptom analysis | ✅ |
 
 ---
 
@@ -197,9 +196,12 @@ bash build-docker.sh
 
 ### Run with Docker Compose
 ```bash
+cp .env.example .env
 docker-compose up -d
 docker-compose logs -f
 ```
+
+Note: Docker Compose in this repo is configured for cloud MongoDB only. Set `MONGO_URI` in `backend/.env`.
 
 ### Stop Services
 ```bash
@@ -217,7 +219,7 @@ docker-compose down -v
 
 All variables documented in `.env.template`:
 - Service ports
-- MongoDB URIs
+- One shared MongoDB URI for Docker/Kubernetes or local dev
 - JWT_SECRET
 - SMTP credentials
 - Gemini API key

@@ -70,6 +70,8 @@ After setup, edit these files:
 
 Required values by service:
 
+If you want one shared MongoDB connection, use the same `MONGO_URI` value everywhere for Docker and Kubernetes.
+
 ### gateway-service/.env
 
 ```env
@@ -150,14 +152,23 @@ GEMINI_MODEL=gemini-1.5-flash
 GEMINI_API_VERSION=v1beta
 ```
 
-## 5. Start Backend (Local Dev)
+## 5. Start Backend
+
+If you want Docker or Kubernetes only, skip the local dev section below and use section 7 or 8.
+
+### Local Dev (optional)
 
 From backend folder:
 
 ### Windows (open all services in separate terminals)
 
-
+```bat
 .\start-all.bat
+```
+
+Important:
+- Use only one backend mode at a time (Local Dev OR Docker OR Kubernetes).
+- If more than one backend mode is running, frontend may hit a different backend than expected.
 
 ### Linux/macOS
 
@@ -212,13 +223,24 @@ npm run dev
 Frontend URL:
 - http://localhost:5173
 
-## 7. Docker Setup (Alternative)
+## 7. Docker Setup
 
 From project root:
 
 ```bash
 cd backend
+cp .env.example .env
 docker-compose up -d
+```
+
+Docker mode is cloud-only in this project:
+- Set `MONGO_URI` in `backend/.env` to your MongoDB Atlas URI.
+- Docker Compose does not start a local MongoDB container.
+
+Check logs:
+
+```bash
+docker-compose logs -f
 ```
 
 Check containers:
@@ -235,9 +257,9 @@ docker-compose down
 
 Notes:
 - Docker compose uses service-to-service URLs inside the Docker network.
-- Set sensitive values through shell env before running compose when needed, such as JWT_SECRET, SMTP_USER, SMTP_PASS, GEMINI_API_KEY.
+- Set sensitive values in `backend/.env` (from `backend/.env.example`) before running compose.
 
-## 8. Kubernetes Setup (Alternative)
+## 8. Kubernetes Setup
 
 From project root:
 
@@ -258,6 +280,20 @@ kubectl get pods -n smart-healthcare
 kubectl get svc -n smart-healthcare
 kubectl get ingress -n smart-healthcare
 ```
+
+If you want to test the gateway locally without using the ingress host, run:
+
+```bash
+kubectl port-forward svc/gateway-service 4010:4000 -n smart-healthcare
+```
+
+Then use `http://localhost:4010` as the backend URL for the frontend.
+
+Important:
+- Kubernetes uses its own MongoDB data (from `k8s/01-secrets.yaml` and `k8s/03-mongodb.yaml`).
+- Local `start-all.bat` uses each service `.env` file.
+- So a user account created in Local Dev may not exist in Kubernetes, which causes `invalid email or password` until you register that user in the Kubernetes environment.
+- If you want one shared database for Docker or Kubernetes, put the same `MONGO_URI` value in the Docker `.env` file and in `k8s/01-secrets.yaml`.
 
 Before apply:
 - Update image names in backend/k8s/04-services-and-deployments.yaml
@@ -280,6 +316,13 @@ If notifications fail:
 If frontend cannot call backend:
 - Ensure frontend/.env has VITE_API_BASE_URL=http://localhost:4000
 - Ensure gateway service is running
+
+If login says "invalid email or password" after switching Local <-> Kubernetes:
+- Confirm which backend mode is active.
+- Register a fresh user in that active mode (`POST /api/auth/register`) and then login.
+- If using Kubernetes without ingress host mapping, run:
+	`kubectl port-forward svc/gateway-service 4000:4000 -n smart-healthcare`
+- If the command fails, check typo: use `kubectl` (not `ubectl`).
 
 ## 10. What to Commit to GitHub
 

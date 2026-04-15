@@ -31,7 +31,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: healthcare-secrets
-                  key: MONGO_URI_GATEWAY
+                  key: MONGO_URI
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -127,7 +127,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: healthcare-secrets
-                  key: MONGO_URI_AUTH
+                  key: MONGO_URI
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -203,7 +203,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: healthcare-secrets
-                  key: MONGO_URI_PATIENT
+                  key: MONGO_URI
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -269,7 +269,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: healthcare-secrets
-                  key: MONGO_URI_DOCTOR
+                  key: MONGO_URI
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -345,7 +345,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: healthcare-secrets
-                  key: MONGO_URI_APPOINTMENT
+                  key: MONGO_URI
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -431,7 +431,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: healthcare-secrets
-                  key: MONGO_URI_NOTIFICATION
+                  key: MONGO_URI
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -527,7 +527,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: healthcare-secrets
-                  key: MONGO_URI_AI
+                  key: MONGO_URI
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
