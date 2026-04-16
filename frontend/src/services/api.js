@@ -1,7 +1,18 @@
 import axios from "axios";
 
+const DEFAULT_API_BASE_URL = "";
+
+function resolveApiBaseUrl() {
+  const envBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (envBaseUrl) {
+    return envBaseUrl.replace(/\/$/, "");
+  }
+
+  return DEFAULT_API_BASE_URL;
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:4000",
+  baseURL: resolveApiBaseUrl(),
   timeout: 15000
 });
 
