@@ -1,12 +1,14 @@
 const express = require('express');
 
-const { register, login, getProfile, getUserById, updateProfile, listUsers, updateUserById, deleteUserById } = require('../controllers/authController');
+const { register, login, verifyForgotPasswordEmail, resetForgotPassword, getProfile, getUserById, updateProfile, listUsers, updateUserById, deleteUserById } = require('../controllers/authController');
 const { verifyToken, authorizeRoles } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/forgot-password/verify', verifyForgotPasswordEmail);
+router.post('/forgot-password/reset', resetForgotPassword);
 router.get('/profile', verifyToken, getProfile);
 router.put('/profile', verifyToken, updateProfile);
 router.get('/users/:id', verifyToken, getUserById);

@@ -2,20 +2,23 @@ const axios = require('axios');
 
 const GEMINI_API_VERSION = process.env.GEMINI_API_VERSION || 'v1beta';
 const GEMINI_BASE_URL = `https://generativelanguage.googleapis.com/${GEMINI_API_VERSION}/models`;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-const GEMINI_FALLBACK_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const GEMINI_FALLBACK_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
 
 const stripModelPrefix = (modelName = '') => String(modelName).replace(/^models\//, '');
 
 const normalizeModelName = (modelName = '') => {
   const name = stripModelPrefix(String(modelName || '').trim());
   if (!name) {
-    return 'gemini-1.5-flash';
+    return 'gemini-2.5-flash';
   }
 
   // Backward compatibility for accidentally configured unsupported names.
-  if (name === 'gemini-3-flash') return 'gemini-2.0-flash';
-  if (name === 'gemini-3-pro') return 'gemini-1.5-pro';
+  if (name === 'gemini-3-flash') return 'gemini-2.5-flash';
+  if (name === 'gemini-3-pro') return 'gemini-2.5-flash';
+  if (name === 'gemini-1.5-flash') return 'gemini-2.5-flash';
+  if (name === 'gemini-1.5-pro') return 'gemini-2.5-flash';
+  if (name === 'gemini-2.0-flash') return 'gemini-2.5-flash';
 
   return name;
 };

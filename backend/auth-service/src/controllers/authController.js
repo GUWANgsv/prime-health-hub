@@ -11,6 +11,7 @@ const DOCTOR_SERVICE_URL = process.env.DOCTOR_SERVICE_URL || 'http://localhost:4
 const PATIENT_SERVICE_URL = process.env.PATIENT_SERVICE_URL || 'http://localhost:4002';
 
 const ROLES = ['PATIENT', 'DOCTOR', 'ADMIN'];
+const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -98,6 +99,66 @@ const login = asyncHandler(async (req, res) => {
 		user: sanitizeUser(user)
 	});
 });
+
+	const verifyForgotPasswordEmail = asyncHandler(async (req, res) => {
+		const { email } = req.body;
+
+		if (!email) {
+			throw new ApiError('email is required', 400);
+		}
+
+		const normalizedEmail = String(email).toLowerCase().trim();
+		if (!isValidEmail(normalizedEmail)) {
+			throw new ApiError('email format is invalid', 400);
+		}
+
+		const user = await User.findOne({ email: normalizedEmail });
+		if (!user) {
+			return res.status(404).json({
+				success: false,
+				message: 'email not found'
+			});
+		}
+
+		return res.status(200).json({
+			success: true,
+			message: 'email found'
+		});
+	});
+
+	const resetForgotPassword = asyncHandler(async (req, res) => {
+		const { email, password, confirmPassword } = req.body;
+
+		if (!email || !password || !confirmPassword) {
+			throw new ApiError('email, password and confirmPassword are required', 400);
+		}
+
+		const normalizedEmail = String(email).toLowerCase().trim();
+		if (!isValidEmail(normalizedEmail)) {
+			throw new ApiError('email format is invalid', 400);
+		}
+
+		if (!PASSWORD_REGEX.test(String(password))) {
+			throw new ApiError('password must be at least 8 characters and include letters and numbers', 400);
+		}
+
+		if (String(password) !== String(confirmPassword)) {
+			throw new ApiError('password and confirmPassword must match', 400);
+		}
+
+		const user = await User.findOne({ email: normalizedEmail });
+		if (!user) {
+			throw new ApiError('email not found', 404);
+		}
+
+		user.password = await bcrypt.hash(String(password), 10);
+		await user.save();
+
+		return res.status(200).json({
+			success: true,
+			message: 'password reset successfully'
+		});
+	});
 
 const getProfile = asyncHandler(async (req, res) => {
 	const user = await User.findById(req.user.id).select('-password');
@@ -297,6 +358,8 @@ const deleteUserById = asyncHandler(async (req, res) => {
 module.exports = {
 	register,
 	login,
+	verifyForgotPasswordEmail,
+	resetForgotPassword,
 	getProfile,
 	getUserById,
 	updateProfile,
