@@ -209,6 +209,11 @@ spec:
                 secretKeyRef:
                   name: healthcare-secrets
                   key: JWT_SECRET
+            - name: APPOINTMENT_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: healthcare-config
+                  key: APPOINTMENT_SERVICE_URL
           readinessProbe:
             httpGet:
               path: /health
