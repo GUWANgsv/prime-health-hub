@@ -888,7 +888,8 @@ function PatientDashboardPage() {
                     fullWidth
                     label="Contact"
                     value={profileForm.contact}
-                    onChange={(e) => setProfileForm((p) => ({ ...p, contact: e.target.value }))}
+                    onChange={(e) => setProfileForm((p) => ({ ...p, contact: e.target.value.replace(/\D/g, "") }))}
+                    inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 15 }}
                     required
                   />
                 </Grid>

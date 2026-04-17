@@ -5,6 +5,7 @@ import GuestHomePage from "../pages/GuestHomePage";
 import RegisterPatientPage from "../pages/RegisterPatientPage";
 import RegisterDoctorPage from "../pages/RegisterDoctorPage";
 import LoginPage from "../pages/LoginPage";
+import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import PatientDashboardPage from "../pages/PatientDashboardPage";
 import DoctorDashboardPage from "../pages/DoctorDashboardPage";
 import AdminDashboardPage from "../pages/AdminDashboardPage";
@@ -14,6 +15,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<GuestHomePage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/register/patient" element={<RegisterPatientPage />} />
       <Route path="/register/doctor" element={<RegisterDoctorPage />} />
 

@@ -69,6 +69,10 @@ function LoginPage() {
           <Typography sx={{ mt: 2 }}>
             New user? <Link to="/">Go to home</Link>
           </Typography>
+
+          <Typography sx={{ mt: 1 }}>
+            <Link to="/forgot-password">Forgot password?</Link>
+          </Typography>
         </CardContent>
       </Card>
     </Box>

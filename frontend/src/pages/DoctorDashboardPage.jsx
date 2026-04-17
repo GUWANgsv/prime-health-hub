@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { jsPDF } from "jspdf";
 import { appointmentService } from "../services/appointmentService";
 import { doctorService } from "../services/doctorService";
 import { patientService } from "../services/patientService";
@@ -250,55 +251,76 @@ function DoctorDashboardPage() {
     }
   };
 
-  const downloadBlob = (response, fallbackName) => {
-    const blob = response.data;
-    const disposition = response.headers?.["content-disposition"] || "";
-    const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^\";]+)"?/i);
-    const fileName = decodeURIComponent(match?.[1] || match?.[2] || fallbackName);
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = fileName;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  };
+  const downloadReportSummaryPdf = (appointment, reportData) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    const maxWidth = pageWidth - margin * 2;
+    const lineHeight = 7;
+    let y = margin;
 
-  const handleDownloadReportSummary = (appointment) => {
-    const reportData = reportByAppointment[appointment._id];
-    if (!reportData) {
-      setError("Load patient reports first");
-      return;
+    const addTextBlock = (text, { bold = false, spacing = 0 } = {}) => {
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      const lines = doc.splitTextToSize(String(text || ""), maxWidth);
+
+      for (const line of lines) {
+        if (y + lineHeight > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+        }
+
+        doc.text(line, margin, y);
+        y += lineHeight;
+      }
+
+      y += spacing;
+    };
+
+    addTextBlock("Patient Report Summary", { bold: true, spacing: 2 });
+    addTextBlock(`Generated: ${new Date().toLocaleString()}`, { spacing: 2 });
+    addTextBlock(`Appointment ID: ${appointment._id || "N/A"}`, { spacing: 3 });
+
+    addTextBlock(`Medical history: ${(reportData.medicalHistory || []).join(", ") || "N/A"}`);
+    addTextBlock(`Allergies: ${(reportData.allergies || []).join(", ") || "N/A"}`);
+    addTextBlock(`Chronic conditions: ${(reportData.chronicConditions || []).join(", ") || "N/A"}`, { spacing: 3 });
+
+    addTextBlock("Reports", { bold: true, spacing: 1 });
+
+    const reports = Array.isArray(reportData.reports) ? reportData.reports : [];
+    if (!reports.length) {
+      addTextBlock("No uploaded reports.");
+    } else {
+      reports.forEach((report, index) => {
+        addTextBlock(
+          `${index + 1}. ${report.fileName || "Unknown file"} (${report.fileType || "unknown type"}) uploaded ${report.uploadedAt ? new Date(report.uploadedAt).toLocaleString() : "N/A"}`
+        );
+      });
     }
 
-    const lines = [
-      `Medical history: ${(reportData.medicalHistory || []).join(", ") || "N/A"}`,
-      `Allergies: ${(reportData.allergies || []).join(", ") || "N/A"}`,
-      `Chronic conditions: ${(reportData.chronicConditions || []).join(", ") || "N/A"}`,
-      "",
-      "Reports:",
-      ...(reportData.reports || []).map((report, index) => `${index + 1}. ${report.fileName} (${report.fileType}) uploaded ${new Date(report.uploadedAt).toLocaleString()}`)
-    ];
-
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-    const responseLike = { data: blob, headers: {} };
-    downloadBlob(responseLike, `patient-report-summary-${appointment._id}.txt`);
-    setSuccess("Report summary downloaded");
+    doc.save(`patient-report-summary-${appointment._id}.pdf`);
   };
 
-  const handleDownloadSingleReport = async (appointment, report) => {
-    if (!report?._id) {
-      setError("This report cannot be downloaded");
-      return;
-    }
-
+  const handleDownloadReportSummary = async (appointment) => {
     setError("");
-    try {
-      const response = await patientService.downloadReportForDoctor(appointment.patientId, report._id);
-      downloadBlob(response, report.fileName || "patient-report");
-      setSuccess("Report downloaded successfully");
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to download report");
+
+    let reportData = reportByAppointment[appointment._id];
+    if (!reportData) {
+      try {
+        const reportsRes = await patientService.getReportsForDoctor(appointment.patientId);
+        setReportByAppointment((prev) => ({
+          ...prev,
+          [appointment._id]: reportsRes
+        }));
+        reportData = reportsRes;
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to load patient reports");
+        return;
+      }
     }
+
+    downloadReportSummaryPdf(appointment, reportData);
+    setSuccess("Report summary PDF downloaded");
   };
 
   const handleAddAvailability = () => {
@@ -495,14 +517,6 @@ function DoctorDashboardPage() {
                     <Typography variant="body2" color="text.secondary">
                       {report.fileName} ({report.fileType})
                     </Typography>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => handleDownloadSingleReport(appointment, report)}
-                      disabled={!report._id}
-                    >
-                      Download
-                    </Button>
                   </Stack>
                 ))}
                 {(reportData.reports || []).length === 0 ? (
@@ -654,7 +668,8 @@ function DoctorDashboardPage() {
                     <TextField
                       label="Contact Number"
                       value={profileForm.contact}
-                      onChange={(e) => setProfileForm((prev) => ({ ...prev, contact: e.target.value }))}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, contact: e.target.value.replace(/\D/g, "") }))}
+                      inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 15 }}
                       required
                     />
                     <TextField
